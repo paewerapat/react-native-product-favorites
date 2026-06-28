@@ -1,6 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import type { Product } from '@/types/product';
+
+const STORAGE_KEY = '@favorites';
 
 type FavoritesContextValue = {
   favorites: Product[];
@@ -13,17 +16,31 @@ const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<Product[]>([]);
 
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((raw) => {
+        if (raw) {
+          setFavorites(JSON.parse(raw));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const isFavorite = useCallback(
     (productId: number) => favorites.some((product) => product.id === productId),
     [favorites],
   );
 
   const toggleFavorite = useCallback((product: Product) => {
-    setFavorites((current) =>
-      current.some((item) => item.id === product.id)
+    setFavorites((current) => {
+      const next = current.some((item) => item.id === product.id)
         ? current.filter((item) => item.id !== product.id)
-        : [...current, product],
-    );
+        : [...current, product];
+
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+
+      return next;
+    });
   }, []);
 
   const value = useMemo(
