@@ -1,6 +1,8 @@
+import type { Product } from '@/types/product';
+
 export type ProductsStackParamList = {
   ProductList: undefined;
-  ProductDetail: { productId: number };
+  ProductDetail: { product: Product };
 };
 
 export type RootTabParamList = {
