@@ -6,7 +6,7 @@ import { ProductListScreen } from '@/screens/ProductListScreen';
 
 const Stack = createNativeStackNavigator<ProductsStackParamList>();
 
-export function ProductsNavigator() {
+export function ProductsStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen

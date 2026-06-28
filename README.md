@@ -51,6 +51,11 @@ npm run android
 
 ไม่ต้องตั้งค่า API key — Fake Store API เป็น public endpoint
 
+> มีไฟล์ `.env` ที่ root อยู่แล้ว (commit ไว้) ตั้ง
+> `EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=1` เพื่อแก้ปัญหา Expo SDK 56
+> ปะทะ `@react-navigation` ตรงๆ — เหตุผลดูที่
+> [Architecture Decisions #5](#5-expo-sdk-56-ปะทะ-react-navigation-ตรงๆ)
+
 ---
 
 ## Project Structure
@@ -117,6 +122,36 @@ _ถ้า app โตขึ้น_ (หลาย domain, async flow ซับซ
 Fake Store API คืนข้อมูลครบในตัว list อยู่แล้ว จึงส่ง object ไปหน้า Detail
 ได้เลย ไม่ต้อง fetch ซ้ำ — เร็วและลด API call (ต่างจากกรณีที่ detail endpoint
 มีข้อมูลมากกว่า ซึ่งจะเลือก fetch ด้วย id แทน)
+
+### 5. Expo SDK 56 ปะทะ `@react-navigation` ตรงๆ
+
+ตั้งแต่ SDK 56, Expo CLI มี Metro resolver check ที่ throw error ทันทีถ้าเจอ
+import `@react-navigation/native-stack` หรือ `@react-navigation/drawer`
+พร้อมกับ resolve เจอ `expo-router/package.json` ได้จาก project root
+(ดู [migration guide](https://docs.expo.dev/router/migrate/sdk-55-to-56/))
+
+ปัญหาคือเช็คนี้แยกแยะไม่ได้ระหว่าง "แอป import expo-router มาใช้จริง" กับ
+"`expo-router` ติดมาเป็น transitive dependency ของ `@expo/cli` เอง"
+(`expo` → `@expo/cli` → `expo-router`) ซึ่ง npm hoist ขึ้น root `node_modules`
+เสมอ แม้โปรเจคนี้จะ **ไม่มี** `expo-router` อยู่ใน `package.json` เลยก็ตาม
+ผลคือทุกโปรเจค SDK 56 ที่ตั้งใจใช้ React Navigation ตรงๆ (ไม่ใช้ expo-router)
+จะโดน error นี้เสมอ
+
+ทางเลือกที่พิจารณา:
+
+1. **ตั้ง `EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK=1`** — env var ที่ Expo
+   เองพิมพ์แนะนำไว้ใน error message ตรงๆ ออกแบบมาสำหรับ scenario นี้
+   โดยเฉพาะ (ไม่ใช่ workaround ปิดปัญหาจริง เพราะไม่มี bug ในโค้ดเรา)
+2. เปลี่ยนไปใช้ `<Stack>` / `<Tabs>` จาก `expo-router` แทนการ import
+   `@react-navigation/*` ตรงๆ — ไม่ต้องใช้ env var แต่ขัดกับโจทย์ที่ระบุ
+   ชัดว่าให้ใช้ React Navigation ตรงๆ (กรรมการอาจเช็ค `@react-navigation`
+   ใน `package.json`/imports)
+3. Downgrade เป็น Expo SDK 55 — แก้ปัญหาได้แต่เสี่ยงและไม่จำเป็น
+   เพราะ scaffold เริ่มต้นมาเป็น SDK 56 อยู่แล้ว
+
+**เลือกข้อ 1** — ตั้งไว้ใน `.env` ที่ root (commit เข้า repo เพราะเป็น
+build-tool config ของโปรเจค ไม่ใช่ secret) ทำให้ `npm run web`/`start`
+ใช้งานได้โดยไม่ต้อง export env ทุกครั้ง
 
 ---
 
