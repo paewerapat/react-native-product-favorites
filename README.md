@@ -76,8 +76,7 @@ src/
 ├── context/
 │   └── FavoritesContext.tsx  # global favorites state + AsyncStorage
 ├── hooks/
-│   ├── useProducts.ts        # fetch list + refresh
-│   └── useProduct.ts         # fetch single product
+│   └── useProducts.ts        # fetch list + refresh
 ├── types/
 │   └── product.ts            # Product type
 └── utils/
