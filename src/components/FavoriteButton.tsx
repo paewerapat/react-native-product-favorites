@@ -1,4 +1,10 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 type Props = {
   isFavorite: boolean;
@@ -6,12 +12,23 @@ type Props = {
 };
 
 export function FavoriteButton({ isFavorite, onPress }: Props) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePress = () => {
+    scale.value = withSequence(withTiming(1.4, { duration: 120 }), withTiming(1, { duration: 120 }));
+    onPress();
+  };
+
   return (
     <Pressable
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-      onPress={onPress}
+      onPress={handlePress}
       hitSlop={8}>
-      <Text style={styles.icon}>{isFavorite ? '♥' : '♡'}</Text>
+      <Animated.Text style={[styles.icon, animatedStyle]}>{isFavorite ? '♥' : '♡'}</Animated.Text>
     </Pressable>
   );
 }
